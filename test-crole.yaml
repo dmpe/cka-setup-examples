@@ -1,0 +1,16 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: "2023-02-18T15:23:55Z"
+  name: test1-crole
+  resourceVersion: "1702"
+  uid: 55dd0215-e49c-48c9-b27f-662d41c5f9e5
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - list
+  - get
+  - watch
