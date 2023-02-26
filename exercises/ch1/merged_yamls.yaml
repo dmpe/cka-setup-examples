@@ -1,0 +1,30 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: "2023-02-26T14:51:09Z"
+  name: api-clusterrole
+  resourceVersion: "1177"
+  uid: 0415da7b-6be8-4700-b88b-9f9084f29853
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - watch
+  - list
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: api-clusterrolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: api-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: apps
+  namespace: api-acess
