@@ -187,3 +187,13 @@ snapshot restore /opt/etcd-backup.db
 
 See exercices/ch1/ 
 
+## Exercises 2
+
+See exercices/ch2/ 
+
+- Only deployment, Pod, and replicasets
+  - Deployment with 3 Replicas = ReplicaSet with 3 Pods
+  - Deployment is abstraction to manage ReplicaSets
+  - `spec.selector.matchLabels` and `spec.template.metadata.labels` need to match !
+- Rollout Strategy and Rollbacks
+- Autoscalling
