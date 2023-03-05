@@ -5,9 +5,9 @@ set -e
 docker rm $(docker ps -a -q) || true
 sudo apt purge kubelet kubeadm 
 
-# curl -LOJ https://github.com/kubernetes/minikube/releases/download/v1.29.0/minikube-linux-amd64
-# chmod +x minikube
-# sudo mv mini	/usr/local/bin
+#curl -LOJ https://github.com/kubernetes/minikube/releases/download/v1.29.0/minikube-linux-amd64
+#sudo chmod +x minikube-linux-amd64
+#sudo mv minikube-linux-amd64 /usr/local/bin/minikube
 
 sudo rm -rf /etc/kubernetes/
 sudo rm -rf /var/lib/kubelet/
