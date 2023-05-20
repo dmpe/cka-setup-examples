@@ -183,17 +183,62 @@ sudo ETCDCTL_API=3 etcdctl --endpoints=https://192.168.226.128:2379 \
 snapshot restore /opt/etcd-backup.db
 ```
 
-## Exercises 1 
+## Exercises 2 
 
-See exercices/ch1/ 
+See `exercices/ch1/` 
 
-## Exercises 2
+## Exercises 3
 
-See exercices/ch2/ 
+See `exercices/ch2/`
 
 - Only deployment, Pod, and replicasets
   - Deployment with 3 Replicas = ReplicaSet with 3 Pods
   - Deployment is abstraction to manage ReplicaSets
   - `spec.selector.matchLabels` and `spec.template.metadata.labels` need to match !
 - Rollout Strategy and Rollbacks
+  - `kubectl rollout status deployment`
+  - keeps track of changes, via revision
+  - rollback: `kubectl rollout undo deployment`
 - Autoscalling
+  - replicas: X
+  - for deployment: `kubectl scale deployment/statefulset`
+  - `Horizontal Pod Autoscaler`: `kubectl autoscale deployment app-cache --cpu-percent=80 --min=3 --max=5/kubectl get hpa`
+- ConfigMap
+  - either as env or mounted as volume; always in RAM
+  - ENV: 
+    ```    
+    envFrom:
+    - configMapRef: 
+        name: <name>`
+    ```
+  - Volume: 
+    ```
+      volumeMounts:
+      - name: db-config-volume
+        mountPath: /etc/config
+    volumes:
+    - name: db-config-volume
+      configMap:
+        name: db-config
+    ```
+- Secret
+  - types: generic, TLS, docker-registry
+  - `data` needs base64 values, `stringData` only cleartext
+  - ENV: 
+    ```    
+    envFrom:
+    - secretRef: 
+        name: <name>`
+    ```
+  - Volumes:
+  ```
+  ...
+    volumes:
+    - name: db-config-volume
+      secret:
+        secretName: db-config
+  ```
+
+
+
+
