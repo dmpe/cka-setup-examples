@@ -185,11 +185,11 @@ snapshot restore /opt/etcd-backup.db
 
 ## Exercises 2 
 
-See `exercices/ch1/` 
+See `exercices/ch2/` 
 
 ## Exercises 3
 
-See `exercices/ch2/`
+See `exercices/ch3/`
 
 - Only deployment, Pod, and replicasets
   - Deployment with 3 Replicas = ReplicaSet with 3 Pods
@@ -203,6 +203,7 @@ See `exercices/ch2/`
   - replicas: X
   - for deployment: `kubectl scale deployment/statefulset`
   - `Horizontal Pod Autoscaler`: `kubectl autoscale deployment app-cache --cpu-percent=80 --min=3 --max=5/kubectl get hpa`
+  - pods needs to have ressources section 
 - ConfigMap
   - either as env or mounted as volume; always in RAM
   - ENV: 
@@ -238,7 +239,9 @@ See `exercices/ch2/`
       secret:
         secretName: db-config
   ```
+## Exercises 4
 
-
+- Resources and Limits
+  - if only limits specified, then limits==resources
 
 
