@@ -244,4 +244,34 @@ See `exercices/ch3/`
 - Resources and Limits
   - if only limits specified, then limits==resources
 
+## Exercises 5
 
+CNI
+
+- Connectivity between Containers (1 Pod)
+  - 1 pod => 1 IP = N containers who share same IP and port space
+  - can communicate using localhost -> sidecars
+- Connectivity between Pods 
+  - each node gets dedicated subnet 
+  - IP to pod is unique, across nodes & NS
+  - IPs are not stable -> pod restart = new IP
+- K8s Service
+  - discoverable names and LoBa
+  - works on basis of labels
+  - types: clusterIP (default), NodePort, LoadBalancer (cloud only)
+      - imperative: `kubectl create service <type> <name> --tpc=<exposed port>:<target port>`
+      - `kubectl run ... --expose` also creates service
+  - NodePort: open port on each node in cluster, globally unique at cluster level
+- Ingress
+  - LoBa Level 7 -> to Service
+- CoreDNS
+  - maps name of service to IP address
+  - defines cluster domain, default: cluster.local
+  - customize via new configMap called `coredns-custom`
+  - either just service `name:port` or if NSed then e.g. `service name.<NS>.cluster.local.svc:port`
+  - Resolve by Pod IP: replace `.` with `-`, e.g. `172-17-0-8.ns1.pod:8080`
+  
+  
+  
+  
+  
