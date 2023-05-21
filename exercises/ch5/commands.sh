@@ -45,18 +45,11 @@ status:
 ```
 
 
-Create a rewrite rule for the CoreDNS configuration that allows referencing
-a Service using the cluster domain cka.example.com. Ensure that the custom
-CoreDNS configuration takes effect.
+coredns rewrite not working
 
 sudo EDITOR=nano kubectl edit configmap -n kube-system coredns
 
 svc.cka.example.com svc.cluster.local
 
-
 sudo kubectl create ns hello
 sudo kubectl run testpod --rm --image=fedora:38 -it -n hello -- bash
-
-
-9. Make a call to the nginx Service using wget or curl from a temporary Pod in a
-new namespace called hello with the appropriate hostname.
