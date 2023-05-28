@@ -271,7 +271,24 @@ CNI
   - either just service `name:port` or if NSed then e.g. `service name.<NS>.cluster.local.svc:port`
   - Resolve by Pod IP: replace `.` with `-`, e.g. `172-17-0-8.ns1.pod:8080`
   
-  
-  
-  
-  
+## Exercises 6
+
+- Volumes Types: emptyDir, hostPath, configMap/Secret, nfs, PVC
+  - declare volume and then volumeMount
+- PV/PVC
+  - PV -> own lifecycle, driver for storage system
+  - PVC requests PV
+  - PV created statically (yaml) or dynamically (via storage class in PVC)
+  - PV volume mode (Block or Filebased), Access Mode and reclaim policy !
+  - Volume Mode: Block needs a format first
+  - Access Mode: RWO (RW by 1 node), ROX (read by many nodes), RWX (RW by many nodes), RWOP (RW by a 1 pod)
+  - Reclaim policy: what should happen if PVC is removed (retain or delete)
+  - After creating PVC status "Bound"
+- Storage Class
+  - type of storage: fast SSD, slow HDD, etc. + parameters
+  - used by PVC (dynamic)
+
+
+
+
+
