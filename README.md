@@ -288,7 +288,28 @@ CNI
   - type of storage: fast SSD, slow HDD, etc. + parameters
   - used by PVC (dynamic)
 
-
-
-
-
+## Exercises 7 - Troubleshooting
+ 
+- Cluster logging not provided, extra step:
+   - logging agent as DaemonSet
+   - sidecar
+   - push from app to destination
+- Metrics Server:
+  - stores in RAM, no persistence
+  - used by `kubectl top`, collects pod and node data
+- Pods:
+  - errors such as ErrImagePull, CrashLoopBackOff, CreateContainerConfigError
+  - inspect events `kubectl get events/describe pod`
+  - interactive shell
+- Service:
+  - matching labels -> `kubectl describe service A` vs `kubectl get pods --show-labels`
+  - kubectl get endpoints A
+  - check target port mapping: `targetPort = containerPort`
+- Cluster Failures on control nodes
+  - `kubectl cluster-info (dump)` for control plane nodes
+  - check `kube-system` namespace
+- Cluster Failures on worker nodes
+  - ssh ...
+  - `k describe node A`
+  - kubelet `journalctl -u kubelet.service` or kube-proxy (daemonset)
+  - kubelet certs can expire, check `openssl x509 -in /var/lib/kubelet/pki/kubelet.crt -text`
