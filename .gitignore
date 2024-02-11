@@ -1,3 +1,5 @@
 *.pdf
 killer/
-
+*.csr
+*.key
+*.crt

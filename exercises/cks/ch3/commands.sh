@@ -1,0 +1,29 @@
+
+# 1 
+openssl genrsa -out jill.key 2048
+openssl req -new -key jill.key -out jill.csr -subj "/CN=jill/O=observer"
+cat <<EOF | sudo kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: jill
+spec:
+  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ3hEQ0NBYXdDQVFBd2Z6RUxNQWtHQTFVRUJoTUNRMW94RHpBTkJnTlZCQWdNQmxCeVlXZDFaVEVoTUI4RwpBMVVFQ2d3WVNXNTBaWEp1WlhRZ1YybGtaMmwwY3lCUWRIa2dUSFJrTVEwd0N3WURWUVFMREFSVVpYTjBNUTB3CkN3WURWUVFEREFScWFXeHNNUjR3SEFZSktvWklodmNOQVFrQkZnOXFhV3hzUUdkdmIyZHNaUzVqYjIwd2dnRWkKTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFERTArRVBPR2NWb3IzbFg3cWx5U2JNbmRLVgpJaGdUczZPZWFDeEVwclB3Q0Q1TVk0ZEJKY1FLdHUrbnB6N0QrbSt1OHZuYjFoOERraXFHVGVyajAyQitBNkRZCmQvNGF6NnR0cmxxQ2paZmdMN2V6YlNxWWlvd0cyRUFHQzlZcGdpVGZCc3UybG5BazlybmdISTlLOStxdFF1K1gKV2xzQUYvTndWazgzbmtRQzVGMy80MDNldlVKRDJwbHhHbnNxc1Z4NGxvdU9VeWxIWlJYcVVsZWNYZ1dhR2lYSwpqU1MzWkNJMDdaZUdYMDhkdzdJNlZiemVPRWNMVmdBUXV0TDBYS0VPbTUvbmtQZjNKU2p5YURudElTUEZKR0VmClpWeHl6OGlCMUY4c0xlYlFzd25Ld0I4dFBYYzNyV2ljVW0xb0dETnBIK0FIZys1V2h0cFVIcDRDSENaTkFnTUIKQUFHZ0FEQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFaamtwZXBhSm4xMG12dDNINlVjODByZzRheTF1M3JBWAppNGh3SWJrcURldEEwOTFPY3hhV3FFNE5OczlRUkV2QitoNDFoUk45aEtFa2ZWMUdGS095R3p0UGpoMzNlU1phCmdYMDVtN1JUNjdYaXJzQldSWTJUSVBpQVRhbk1kT0NyZjZycWhiNjV0OW1UYXcyK1NWSTJJUFVpbDBUNkFReXIKZjFGSkJmbjF0eHRWMnZMd1MvcDVwancwWmlJUVhOdHk2djZMVkNtTVU2emU5c2VKeXY2aGNab1d0V1l3UEhPNwpTNmxmTEdiVWpub3FmMDlVdkFISjZTb3RVK1VTUzAva1Jqd3FJeUhHNkc1Y1hhTllYV2pDdjJneXNXTWdsQithCnF1S1g1dGZiYUZsRklnN2JPcDlwa29ldmJxZHNhWjAyLzIvTWxRRmNVc1lRK3pWdmdSM2VMUT09Ci0tLS0tRU5EIENFUlRJRklDQVRFIFJFUVVFU1QtLS0tLQo=
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 8633400
+  usages:
+  - client auth
+EOF
+sudo kubectl certificate approve jill
+sudo kubectl get csr jill -o jsonpath={.status.certificate}| base64 -d > jill.crt
+sudo kubectl config set-credentials jill --client-key=jill.key --client-certificate=jill.crt --embed-certs=true
+sudo kubectl config set-context jill --cluster=minikube --user=jill
+sudo kubectl config use-context jill
+
+# 2
+sudo kubectl create role -n default --verb="get,list,watch" --resource pods main -o yaml --dry-run
+sudo kubectl create rolebinding main-rb -n default --role main --group observer -o yaml --dryn-run
+
+
+
+
