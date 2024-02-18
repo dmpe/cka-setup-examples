@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pod
+  name: service-list
+  namespace: t23
+spec:
+  serviceAccount: api-call
+  containers:
+  - image: alpine/curl:3.14
+    name: service-list
+    command: ["/bin/sh", "-c"]
+    # kubectl create token <SA>
+    args:
+      - |
+        export TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+        while :; do curl -k -v --header "Authorization: Bearer $TOKEN" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/default/services; sleep 1; done
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
