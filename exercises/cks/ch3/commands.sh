@@ -25,10 +25,3 @@ sudo kubectl create role -n default --verb="get,list,watch" --resource pods main
 sudo kubectl create rolebinding main-rb -n default --role main --group observer -o yaml --dryn-run
 
 # 4 Create a Pod named service-list in the namespace t23. 
-The container uses the image alpine/curl:3.14 and makes a curl call to the Kubernetes API that lists
-Service objects in the default namespace in an infinite loop. 
-
-Create and attach
-the service account api-call. 
-Inspect the container logs after the Pod has been
-started. What response do you expect to see from the curl command

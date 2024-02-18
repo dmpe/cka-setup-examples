@@ -15,7 +15,8 @@ spec:
     # kubectl create token <SA>
     args:
       - |
-        export TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+        # export TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+        export TOKEN="eyJhbGciOiJSUzI1NiIsImtpZCI6IlA0RkNuanpTWDhrdkFNdV9ONXlqUUd1VHNpd1VTSGEtWGhUM3ZJM3pOUVEifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJ0MjMiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiYXBpLWNhbGwtdG9rZW4iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiYXBpLWNhbGwiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2YzAwMTNlMC05MzBlLTRhZGQtYjEwNS1kNTI5MzQzOWRiODQiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6dDIzOmFwaS1jYWxsIn0.byVc9VGzSsiPxij8hJOftjaZGPzi9AoJZY2DaeW_goEAcz6vTkoOlmofjZk11wqUgkcSl1sCu4hVRz5FoYqHoQ-S8INsO8SQFGrg6sTRZb7rYAjNuriQkIqzxog8OoDZ7c6esPT9CfQlQg3HJf7_5UG9qE2aQLGcyn7RUA74G_vAgI7R8BZO-wBlTdibFE00dgSQOiVWTAnq6N8pf0ufRxmfbvJlxTLc1YeVwF65GASK5S1kFBVdbGj_pue4NtpnqH1tzwKNBHrPBbjw5hHgv51aj4LeC1krC8yWpKMTOk8gBc_iig39cgb0NdGx5h9bCb2TraqNmg0csdZ3X7Km0g"
         while :; do curl -k -v --header "Authorization: Bearer $TOKEN" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/default/services; sleep 1; done
     resources: {}
   dnsPolicy: ClusterFirst
