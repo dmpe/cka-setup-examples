@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: audited
+  labels:
+    run: busybox-security-context
+  name: busybox-security-context
+spec:
+  containers:
+  - command: ["sh", "-c"]
+    args:
+      - "sleep 1h"
+    image: busybox:1.28
+    name: busybox-security-context
+    volumeMounts:
+    - name: empty
+      mountPath: /data/test
+    securityContext:
+      allowPrivilegeEscalation: true
+      privileged: true
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  volumes: 
+    - name: empty
+      emptyDir: {}

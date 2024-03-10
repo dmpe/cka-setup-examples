@@ -189,12 +189,14 @@ EOF
 - `seccomp`
   - restrict calls made from userspace into kernel
   - opt-in pod-by-pod basis; default can be choosen
+
 ```
 securityContext:
   seccompProfile:
     type: RuntimeDefault
 ```
   - or a custom version
+
 ```
 securityContext:
   seccompProfile:
@@ -203,6 +205,7 @@ securityContext:
 ```
 
 - use also `sysctl`
+
 ```
 securityContext:
   sysctls:
@@ -211,3 +214,67 @@ securityContext:
   - name: debug.iotrace
     value: "1"
 ```
+
+### Microservice vulnerabilities
+
+- define security settings not only on OS level, but also on container/pod level
+with tools such as PSA/Open Policy Agent
+- avoid root in contianer because it is a root on the host too; could escape the pod, and infect the OS system
+- set `securityContext`, which defines privilege and ACLs for pod
+  - user/group ID
+  - grant some root priviledges
+  - runAsNonRoot, priviledged, etc.
+- pod security admission:
+  - which security standart to follow
+  - opt in to add label to a namespace
+  - label: prefix, mode (warn, audit, enforce) and level (baseline, priviledged, restricted)
+  - no flexibility, no customization
+- open policy agent (OPA) / Gatekeeper
+  - Rego language to write rules
+  - gatekeeper uses OPA in k8s
+  - create constraint template with Rego and constraint
+- storing secrets in `etcd`
+  - encrypt etcd DB via EncryptionConfiguration
+  - also needs to adjust API server with that file
+- container runtime sandbox: Kata and gVisor
+- Kata Containers:
+  - runs containers in lightweigt VM
+- gVisor:
+  - implements linux kernel on host -> syscalls not shared anymore
+  - uses `runsc` runtime -> containerd needs adjustments
+  - define and reference runtime class
+  - exec pod and `dmesg` - see gVisor
+- pod-to-pod mTLS
+  - by default, no encryption between pods
+  - mTLS allows to verify client identity
+  - *alternative*: WireGuard 
+
+### Supply Chain Security
+
+- minimazing base image
+  - avoid shell container, harder to troubleshoot
+  - e.g. use alpine or distroless
+- multistage approach to building images
+  - separate build from runtime stage
+- reduce number of layers
+- secure supply chain
+  - sign container images
+  - use SHA256 hash digest for images
+- use private container registry
+- use OPA/kyverno/other policy engines
+- admission controller webhook
+  - e.g. ImagePolicyWebhook
+  - first define `/etc/kubernetes/admission-control/image-policy-webhook-admission-
+config.yaml`
+  - create kubeconfig which points to webhook service endpoint
+  - next, adjust API server
+    - `--enable-admission-plugins=...ImagePolicyWebhook...`
+    - `--admission-control-config-file=...file...` + volume mounts
+- static analysis of docker images -> `hadolint`
+- `kubesec` for YAML analysis
+- use `trivy` for docker image analysis
+
+
+
+
+
