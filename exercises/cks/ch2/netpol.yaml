@@ -33,3 +33,20 @@ spec:
         protocol: TCP
       - port: 53
         protocol: UDP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-namespaces
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:   # all ingress is allowed, but egress allowed only to 2 NS
+  - to:
+    - namespaceSelector:
+        matchExpressions:
+        - key: namespace
+          operator: In
+          values: ["frontend", "backend"]

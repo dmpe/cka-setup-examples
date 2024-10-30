@@ -1,0 +1,49 @@
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "p1"
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      type: messenger
+  egressDeny:
+  - toEndpoints:
+    - matchLabels:
+        type: database
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "p3"
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      type: transmitter
+  egressDeny:
+  - toEndpoints:
+    - matchLabels:
+        type: database
+    icmps:
+    - fields:
+      - type: 8
+        family: IPv4
+      - type: EchoRequest
+        family: IPv6
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "p3"
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      type: database
+  egressDeny:
+  - toEndpoints:
+    - matchLabels:
+        type: messenger
+    authentication:
+      mode: "required"

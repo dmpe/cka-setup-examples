@@ -13,7 +13,7 @@ Some other information:
 ## Exam
 
 - 10% Cluster Setup
-  - NetPolicies
+  - Network Policies
   - CIS benchmark
   - Ingress control
   - Verify binaries
@@ -25,6 +25,7 @@ Some other information:
   - AppArmor, seccomp
 - 20% Minimize vulnerabilities
   - k8s secrets
+  - pod security standards/policies
   - pod-to-pod mTLS
   - OS level security
 - 20% Supply chain security
@@ -59,21 +60,228 @@ k config get-contexts
 k config set-context minikube --namespace kube-system
 ```
 
+## General tips
+
+- Use `grep -B(efore) -A(fter)` for more content
+
 # Cluster Setup
+
 ## Network Policies
+
+[docs](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 
 - no imperative way, only declarative
 - NS based approach
 
+```
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-everything
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-everything
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - {}
+  egress:
+  - {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress: # allow ingress only from 172.17.0.0/16, but block 172.17.1.0/24 range OR
+           # allow ingress from namespace with x=y labels OR
+  - from:  # allow from pods which have role=frontend, in default NS
+           # AND allows ingress only on 6379-32768
+           # Reason for OR - from contains 3 blocks, if it would be only under 1 then it would have been AND
+    - ipBlock:
+        cidr: 172.17.0.0/16
+        except:
+        - 172.17.1.0/24
+    - namespaceSelector:
+        matchLabels:
+          project: myproject
+    - podSelector:
+        matchLabels:
+          role: frontend
+    ports:
+    - protocol: TCP
+      port: 6379
+      endPort: 32768
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 5978
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: egress-namespaces
+spec:
+  podSelector:
+    matchLabels:
+      app: myapp
+  policyTypes:
+  - Egress
+  egress:   # all ingress is allowed, but egress allowed only to 2 NS with specific labels !
+  - to:
+    - namespaceSelector:
+        matchExpressions:
+        - key: namespace
+          operator: In
+          values: ["frontend", "backend"]
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-from-ns-netpol
+  namespace: special-ns
+spec:
+  podSelector:{} 
+  policyTypes:
+  - Ingress 
+  ingress: # allow from specific NS name
+    - from:
+      - namespaceSelector:     
+          matchLabels:
+            kubernetes.io/metadata.name: cks-exam
+```
+
+
+### Cilium Networking policies
+
+NS `CiliumNetworkPolicy` and non-NS `CiliumClusterwideNetworkPolicy`
+
+Level 3
+
+```
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "deny-all"
+spec:
+  endpointSelector:
+    matchLabels:
+      role: restricted
+  egress:
+  - {}
+  ingress:
+  - {}
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "allow-all-from-frontend" # frontend can talk to all pods in the default NS
+spec:
+  endpointSelector:
+    matchLabels:
+      role: frontend
+  egress:
+  - toEndpoints:
+    - {}
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "cidr-rule"
+spec:
+  endpointSelector:
+    matchLabels:
+      app: myService
+  egress:
+  - toCIDR:
+    - 20.1.1.1/32
+  - toCIDRSet:
+    - cidr: 10.0.0.0/8
+      except:
+      - 10.96.0.0/12
+```
+
+Level 4
+
+```
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "l4-rule" # rule limits all endpoints with the label app=myService to only be able to emit packets using TCP on port 80, to any layer 3 destination
+spec:
+  endpointSelector:
+    matchLabels:
+      app: myService
+  egress:
+    - toPorts:
+      - ports:
+        - port: "80"
+          protocol: TCP
+---
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: "icmp-rule" # rule limits all endpoints with the label app=myService to only be able to emit packets using ICMP 
+                    # with type 8 and ICMPv6 with message EchoRequest, to any layer 3 destination:
+spec:
+  endpointSelector:
+    matchLabels:
+      app: myService
+  egress:
+  - icmps:
+    - fields:
+      - type: 8
+        family: IPv4
+      - type: EchoRequest
+        family: IPv6
+```
+
+
 ## CIS Benchmark
 
-- Execute as job
+- Execute as job:
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-master.yaml
 ```
 
+Example in `kube-apiserver`:
+
+`--kubernetes-service-node-port=31000 -> 0` (switching from NodePort to ClusterIP for k8s service)
+
+requires also:
+
+```
+kubectl delete svc kubernetes
+```
+
 ## TLS Ingress
+
+[docs](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
 - Create TLS cert, sign and import 
 
@@ -93,34 +301,44 @@ spec:
     ...
 ```
 
-
 - to test locally, find node IP, add to `/etc/hosts` file and then do `curl`
 
 ## Protect inbound K8s ports
 
 - use firewall
 - protect cloud metadata endpoints -> Network Policies
-- protect GUI such as k8s dashboard with oauth2 proxy
+- protect GUI such as k8s dashboard with oauth2 proxy or RBAC keys
+
+```
+kubectl create sa observer-user -n kubernetes-dashboard
+kubectl create clusterrole pod-reader --verb=get,list,watch --resource=deployment -o yaml --dry-run
+kubectl create clusterrolebinding dash-sa --clusterrole=pod-reader --serviceaccount=kubernetes-dashboard:observer-user -o yaml --dry-run
+kubectl create token observer-user -n kubernetes-dashboard --duration=0s
+
+# for testing
+kubectl create deployment deploy --image=nginx --replicas=3 -n default
+```
 
 ## Verify binaries
 
 - https://dl.k8s.io lists all hashes
 - `$(cat kubectl.sha256) kubectl | sha256sum --check` for checking it
-
+- `$(cat kubectl.sha512) kubectl | sha512sum --check` for checking it
 
 # Cluster hardening
 
 ## Kubernetes API Server
 
 - AuthN -> AuthZ -> Admission Controller -> Validation
-- AC verifies if request is well-formed or needs to be modified.
+- Adm. Con. verifies if request is well-formed or needs to be modified.
 - Validation optional, can be in AC.
 - API Server is exposed: 
-  - kubernetes.default.svc to avoid IP for API server, e.g. from inside pod
+  - `kubernetes.default.svc` to avoid IP for API server, e.g. from inside pod
     - its endpoint points to the IP/port
   - e.g. in pod via env variables `KUBERNETES_SERVICE_HOST` and `_PORT`
 - access with client cert
-- from kubeconfig extract base64 encoded values and then execute
+- from kubeconfig extract base64 encoded values and then execute:
+
 ```
 curl --cacert ca --cert kubernetes-admin.crt --key kubernetes-admin.key ...
 ```
@@ -133,6 +351,7 @@ curl --cacert ca --cert kubernetes-admin.crt --key kubernetes-admin.key ...
 
   - crete private key `openssl genrsa -out johndoe.key 2048`
   - create and approve CertSignReq 
+
     ```
     openssl req -new -key johndoe.key -out johndoe.csr
     cat johndoe.csr | base64 | tr -d "\n"
@@ -151,17 +370,42 @@ EOF
   kubectl certificate approve johndoe
   kubectl get csr johndoe -o jsonpath={.status.certificate} | base64 -d > johndoe.crt
     ```
+
   - add Role and assign Role to RB with the user
   - add to kubeconfig
+
   ```
-  kubectl config set-credentials johndoe --client-key=johndoe.key \
---client-certificate=johndoe.crt --embed-certs=true
+  kubectl config set-credentials johndoe --client-key=johndoe.key --client-certificate=johndoe.crt --embed-certs=true
   kubectl config set-context johndoe --cluster=minikube --user=johndoe
   ```
 
 - SA -> disable automount token in the pod
 - SA token can be generated by `create token` or via k8s secret with special type and annotation
 - Update K8s frequently
+
+on control nodes:
+```
+apt update
+apt upgrade
+kubeadm upgrade plan
+kubeadm upgrade apply
+systemctl restart kubelet
+```
+
+on worker nodes:
+```
+apt update
+apt upgrade
+kubeadm upgrade node
+systemctl restart kubelet
+```
+
+
+### From inside pod, K8s API access
+```
+curl -s -k -m 5 -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" https://kubernetes.default/apis/apps/v1/namespaces/k97/deployments/
+curl -s -k -m 5 -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" https://kubernetes.default/api/v1/namespaces/extra/secret/my-secret/
+```
 
 ### System Hardening
 
@@ -175,9 +419,9 @@ EOF
 - chown file permissions
 - open ports -> netstat/ss
 - Kernel Hardening with `seccomp` and `AppArmor`
-- `AA`
+- `AA` - [docs](https://gitlab.com/apparmor/apparmor/-/wikis/Documentation)
   - access control, a sec. layer between app and system functions
-  - alternative to SeLinux
+  - alternative to `SeLinux`
   - rules can define what app can/cannot do
   - must be loaded in AA before take effect -> every worker node
   - `aa-status` - 2 modes: `enforce` and `complain`
@@ -216,16 +460,50 @@ securityContext:
 
 ### Microservice vulnerabilities
 
-- define security settings not only on OS level, but also on container/pod level
-with tools such as PSA/Open Policy Agent
-- avoid root in contianer because it is a root on the host too; could escape the pod, and infect the OS system
+- define security settings not only on OS level, but also on container/pod level with tools such as PSA/Open Policy Agent/Kyverno
+- avoid `root` in contianer because it is a root on the host too; could escape the pod, and infect the OS system
 - set `securityContext`, which defines privilege and ACLs for pod
   - user/group ID
   - grant some root priviledges
   - runAsNonRoot, priviledged, etc.
-- pod security admission:
-  - which security standart to follow
-  - opt in to add label to a namespace
+
+```
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-demo
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+  volumes:
+  - name: sec-ctx-vol
+    emptyDir: {}
+  containers:
+  - name: sec-ctx-demo
+    image: busybox:1.28
+    command: [ "sh", "-c", "sleep 1h" ]
+    volumeMounts:
+    - name: sec-ctx-vol
+      mountPath: /data/demo
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      seLinuxOptions:
+        level: "s0:c123,c456"
+```
+
+
+- [pod security admission](https://kubernetes.io/docs/concepts/security/pod-security-standards/):
+  - which security standard to follow
+  - opt in - always add 2 labels to a namespace:
+
+```
+pod-security.kubernetes.io/enforce (mode): baseline (level)
+pod-security.kubernetes.io/<MODE>-version: latest
+```
+
   - label: prefix, mode (warn, audit, enforce) and level (baseline, priviledged, restricted)
   - no flexibility, no customization
 - open policy agent (OPA) / Gatekeeper
@@ -285,5 +563,6 @@ with tools such as PSA/Open Policy Agent
 - `readOnlyRootFilesystem`: true
   - use `EmptryDir` for Write operations, e.g. Nginx
 - audit logs:
-  - audit policy yaml: 4 levels
+  - audit policy yaml: 4 levels `/etc/kubernetes/audit/policy.yaml`
+    - logs in `/etc/kubernetes/audit/logs/audit.log`
   - kube api server needs to be adjusted, 2 flags
