@@ -1,0 +1,7 @@
+write-kubeconfig-mode: "0644"
+cluster-init: true
+disable-cloud-controller: true
+docker: true
+secrets-encryption: true
+disable: "servicelb,traefik"
+flannel-backend: "none"

@@ -70,8 +70,7 @@ k config set-context minikube --namespace kube-system
 - Execute as job
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/\
-main/job-master.yaml
+kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-master.yaml
 ```
 
 ## TLS Ingress
