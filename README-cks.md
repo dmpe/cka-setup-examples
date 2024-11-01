@@ -578,6 +578,7 @@ etcdctl --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd
 
 - always encrypt etcd DB via `EncryptionConfiguration`
 - also needs to adjust kube API server with that file + mountPaths -> `--encryption-provider-config=/etc/kubernetes/enc/enc.yaml`
+- :warning: to properly create secret use `echo -n xyz | base64`
 
 ```
 apiVersion: apiserver.config.k8s.io/v1
