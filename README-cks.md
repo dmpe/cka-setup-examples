@@ -598,11 +598,11 @@ resources:
 - Kata Containers:
   - runs containers in lightweigt VM
 
-- gVisor:
+- `gVisor`:
   - implements linux kernel on host -> syscalls not shared anymore
-  - uses `runsc` runtime -> containerd needs adjustments
+  - uses `runsc` runtime -> `containerd` needs adjustments
   - define and reference runtime class
-  - exec pod and `dmesg` - see gVisor
+  - create pod, exec into it and run `dmesg` - see gVisor
 
 ```
 apiVersion: node.k8s.io/v1
@@ -656,7 +656,7 @@ spec:
 - Falco - host + container level activity
   - alert fires if matches specific event
   - must be on all workers in k8s cluster
-  - `/etc/falco` for config directory
+  - `/etc/falco` for config directory + also need to restart falco to see new rules
   - rules consist of rule, macro and lists
 
 ```
@@ -669,9 +669,9 @@ falco ...
 - `readOnlyRootFilesystem`: true
   - use `EmptryDir` for Write operations, e.g. Nginx
 - [audit logs](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/):
-  - audit policy yaml: 4 levels `/etc/kubernetes/audit/policy.yaml`
-    - logs in `/etc/kubernetes/audit/logs/audit.log`
-  - kube api server needs to be adjusted, 2 flags
+  - audit policy yaml - 4 levels in `/etc/kubernetes/audit/policy.yaml`
+  - logs in `/etc/kubernetes/audit/audit.log`
+  - kube api server needs to be adjusted with `--audit-policy-file=/etc/kubernetes/audit-policy.yaml` + mouthPaths
 
 - `SysCalls` - SysCall Activity Trace
   - investigate using `strace -f -p <PID>` when e.g. process in container pod
