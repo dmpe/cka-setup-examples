@@ -22,7 +22,7 @@ Some other information:
 - 15% System Hardening
   - OS footprint
   - least privilage
-  - `AppArmor`, seccomp
+  - `AppArmor`, `seccomp`
 - 20% Minimize vulnerabilities
   - k8s secrets
   - pod security standards/policies
@@ -35,7 +35,7 @@ Some other information:
 - 20% Observability
   - Audit logs
   - immutability of runtimes
-  - behavioral analytics/threat detection
+  - behavioral analytics/threat detection with `Falco`
 
 ## Minikube setup
 
@@ -357,7 +357,7 @@ curl --cacert ca.crt --cert kubernetes-admin.crt --key kubernetes-admin.key ...
     - `openssl req -new -key johndoe.key -out johndoe.csr`
       - carefull on Common Name which should match task/username
     - `cat johndoe.csr | base64 -w 0 > johndoe-base64`
-  - create and approve CertSignReq 
+  - create and approve `CertSignReq` - Automatic Signature via K8s
 
     ```
     cat <<EOF | kubectl apply -f -
@@ -375,6 +375,12 @@ EOF
   kubectl certificate approve johndoe
   kubectl get csr johndoe -o jsonpath={.status.certificate} | base64 -d > johndoe.crt
     ```
+
+  - create and approve `CertSignReq` - Manual signature via openssl
+
+```
+openssl x509 -req -in SOME.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out SOME.crt
+```
 
   - add Role and assign Role to RB with the user
   - add to kubeconfig
@@ -676,3 +682,8 @@ falco ...
 
 - `SysCalls` - SysCall Activity Trace
   - investigate using `strace -f -p <PID>` when e.g. process in container pod
+
+
+### kubelet
+
+If systemd installation, then config is in `/var/lib/kubelet/config.yaml`, not in the configmap
