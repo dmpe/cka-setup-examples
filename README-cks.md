@@ -583,8 +583,8 @@ etcdctl --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd
 ```
 
 - always encrypt etcd DB via `EncryptionConfiguration`
-- also needs to adjust kube API server with that file + mountPaths -> `--encryption-provider-config=/etc/kubernetes/enc/enc.yaml`
-- :warning: to properly create secret use `echo -n xyz | base64`
+- also needs to adjust kube API server with that file + `mountPaths` -> `--encryption-provider-config=/etc/kubernetes/enc/enc.yaml`
+- :warning: to properly create `secret` use `echo -n xyz | base64`
 
 ```
 apiVersion: apiserver.config.k8s.io/v1
@@ -646,21 +646,26 @@ spec:
   - use SHA256 hash digest for images
 - use private container registry
 - use OPA/kyverno/other policy engines
-- admission controller webhook
-  - e.g. ImagePolicyWebhook
+
+
+### Admission controller webhook
+
+  - e.g. `ImagePolicyWebhook`
   - first define `/etc/kubernetes/admission-control/image-policy-webhook-admission-config.yaml`
   - create kubeconfig which points to webhook service endpoint
   - next, adjust API server
     - `--enable-admission-plugins=...ImagePolicyWebhook...`
     - `--admission-control-config-file=...file...` + volume mounts
+
+
 - static analysis of docker images -> `hadolint`
 - `kubesec` for YAML analysis
-- use `trivy` for docker image analysis
+- use `trivy`/`bom` for docker image analysis
 
 ### Monitoring, Logging, Runtime Security
 
 - Behaviour Analytics of VM nodes with Falco/Tetragon/Tracee
-- Falco - host + container level activity
+- `Falco` - host + container level activity
   - alert fires if matches specific event
   - must be on all workers in k8s cluster
   - `/etc/falco` for config directory + also need to restart falco to see new rules
@@ -669,16 +674,21 @@ spec:
 ```
 sudo -i
 falco ...
-````
+```
 
 - use immutable containers
   - use distroless images
 - `readOnlyRootFilesystem`: true
   - use `EmptryDir` for Write operations, e.g. Nginx
-- [audit logs](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/):
+
+
+### Audit Logging 
+
+[audit logs](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+
   - audit policy yaml - 4 levels in `/etc/kubernetes/audit/policy.yaml`
   - logs in `/etc/kubernetes/audit/audit.log`
-  - kube api server needs to be adjusted with `--audit-policy-file=/etc/kubernetes/audit-policy.yaml` + mouthPaths
+  - kube api server needs to be adjusted with `--audit-policy-file=/etc/kubernetes/audit-policy.yaml` + `mouthPaths`
 
 - `SysCalls` - SysCall Activity Trace
   - investigate using `strace -f -p <PID>` when e.g. process in container pod
@@ -686,4 +696,5 @@ falco ...
 
 ### kubelet
 
-If systemd installation, then config is in `/var/lib/kubelet/config.yaml`, not in the configmap
+If systemd installation, then config is in `/var/lib/kubelet/config.yaml`, not in the `kubectl edit configmap -n kube-system kubelet-config`. 
+For rolling it out, it will require `kubeadm upgrade node phase kubelet-config && systemctl restart kubelet`.
